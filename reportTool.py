@@ -1,5 +1,5 @@
 #for proof point simulated attack training (PSAT) phising campaign reports
-#plots 5 years of report, click, credential submission, and training message data
+#plots 5 years of view, report, click, credential submission, and training message data
 #nice high level report to show training over time that can be generated at any time
 #change data and column names as needed
 
@@ -19,10 +19,10 @@ first_year = last_month.year-5
 
 start_date = str(first_year)+"-01-01" #"yyyy-MM-dd" (5 years ago)
 end_date = last_month.strftime("%Y-%m")+"-28" #"yyyy-MM-dd" (28th day of previous month)
-api_key = '<enter key>' #change this!!!!
+api_key = 'API Key Here'#change me!!!!
 
 def connect_to_api(page_number, start_date, end_date, api_key):
-    url = f'<enter api url with necessary variables i.e. {page_number}{start_date}{end_date}>' #change this!!!!
+    url = f'API URL here with necessary variables added i.e.: {page_number} {start_date} {end_date}'#change me!!!!
     headers = {'x-apikey-token': api_key}
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
@@ -68,48 +68,49 @@ while(True):
 
 #read csv file
 df_total = pd.read_csv(end_date+' phishing_extended_output_past_5yr.csv')
-total_rows = df_total.shape[0]  # or use len(df_total)
+total_rows = df_total.shape[0]  #or use len(df_total)
 print(f'Total number of rows: {total_rows}')
 
 #plot our csv data
-#function to extract year from campaign name
-def extract_year(name):
-    match = re.search(r'(?:\D|^)(20\d{2})(?:\D|$)', name)
-    return match.group(1) if match else None
+#remove duplicate rows from multiple link clicks and such
+df_total = df_total.drop_duplicates(subset=['useremailaddress', 'campaignname', 'eventtype'])
 
-#apply the function to the 'campaignname' column
-df_total['year'] = df_total['campaignname'].apply(extract_year)
+#extract date
+df_total['campaignstartdate'] = pd.to_datetime(df_total['campaignstartdate'])
+df_total['year'] = df_total['campaignstartdate'].dt.year
 
 #exclude rows where 'year' is None
 df_total = df_total[df_total['year'].notna()]
 
-#filter the data to include only the specified event types
-df_total = df_total[df_total['eventtype'].isin(["Reported", "Email Click", "Data Submission", "TM Sent", "Email View"])]
+#filter the data to include only the specified event types for bar graph
+df_bars = df_total[df_total['eventtype'].isin(["Reported", "Email Click", "Data Submission", "Email View"])]
+#filter the data to include only the specified event types for line graph
+df_line = df_total[df_total['eventtype'].isin(["TM Sent"])]
 
 #group the data by 'year' and 'eventtype', and count the number of each combination
-grouped = df_total.groupby(['year', 'eventtype']).size().reset_index(name='counts')
+grouped = df_bars.groupby(['year', 'eventtype']).size().reset_index(name='counts')
+groupedLine = df_line.groupby(['year', 'eventtype']).size().reset_index(name='counts')
 
 #calculate the total number of events for each year
 total_counts = grouped.groupby('year')['counts'].sum()
 
 #create a new DataFrame that includes all years and event types
 all_data = pd.DataFrame([(year, event_type) for year in grouped['year'].unique() for event_type in grouped['eventtype'].unique()], columns=['year', 'eventtype'])
+all_data_for_line = pd.DataFrame([(year, event_type) for year in grouped['year'].unique() for event_type in groupedLine['eventtype'].unique()], columns=['year', 'eventtype'])
 
 #merge the new DataFrame with the grouped data, filling in a percentage of 0 where no events occurred
 all_data = all_data.merge(grouped, on=['year', 'eventtype'], how='left').fillna(0)
-
-#calculate the total number of "Email View" events for each year
-email_view_counts = all_data[all_data['eventtype'] == 'Email View'].groupby('year')['counts'].sum()
+all_data_for_line = all_data_for_line.merge(groupedLine, on=['year', 'eventtype'], how='left').fillna(0)
 
 #convert the counts to percentages relative to "Email View" events
-all_data['percentage'] = all_data.apply(lambda row: row['counts'] / email_view_counts[row['year']] * 100 if row['eventtype'] != 'Email View' else 0, axis=1)
+all_data['percentage'] = all_data.apply(lambda row: row['counts'] / total_counts[row['year']] * 100, axis=1)
 
 #get the unique years and event types
 years = all_data['year'].unique()
-event_types = ["Reported", "Email Click", "Data Submission"]
+event_types = ["Email View", "Reported", "Email Click", "Data Submission"]
 
 #assign a unique color to each event type
-colors = {"Reported": (0.8, 0.8, 0.8), "Email Click": "black", "Data Submission": "red"}
+colors = {"Email View": (1, 1, 1),"Reported": (0.8, 0.8, 0.8), "Email Click": "black", "Data Submission": "red"}
 
 #create a bar chart for each year
 bar_width = 0.2
@@ -120,10 +121,10 @@ for j, event_type in enumerate(event_types):
         event_data = data[data['eventtype'] == event_type]['percentage']
         percentage = event_data.values[0] if len(event_data) > 0 else 0
         percentages.append(percentage)
-    plt.bar(np.arange(len(years)) + j * bar_width, percentages, color=colors[event_type], width=bar_width, label=event_type)
+    plt.bar(np.arange(len(years)) + j * bar_width, percentages, color=colors[event_type], width=bar_width, label=event_type, edgecolor="black")
 
 #calculate the percentage of "TM Sent" events relative to "Email Clicked" events for each year
-tm_sent_data = all_data[all_data['eventtype'] == "TM Sent"].sort_values('year')
+tm_sent_data = all_data_for_line[all_data_for_line['eventtype'] == "TM Sent"].sort_values('year')
 email_clicked_data = all_data[all_data['eventtype'] == "Email Click"].sort_values('year')
 tm_sent_percentages = tm_sent_data['counts'].values / email_clicked_data['counts'].values * 100
 
