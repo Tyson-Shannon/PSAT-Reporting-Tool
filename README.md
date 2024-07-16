@@ -3,4 +3,4 @@ Using your Proofpoint simulated attack training (PSAT) API this code will develo
 ![image](https://github.com/user-attachments/assets/4f6f174e-34d1-48a4-b5f8-cbd97252bcc9)
 
 
-Shows number of PSAT emails reported, clicked, number of credentials entered, and training completed.
+Shows number of PSAT emails viewed, reported, clicked, number of credentials entered, and training completed.
