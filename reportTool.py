@@ -112,7 +112,7 @@ event_types = ["Reported", "Email Click", "Data Submission"]
 #assign a unique color to each event type
 colors = {"Reported": (0.8, 0.8, 0.8), "Email Click": "black", "Data Submission": "red"}
 
-#create a bar chart for each year
+# Create a bar chart for each year
 bar_width = 0.2
 for j, event_type in enumerate(event_types):
     percentages = []
@@ -121,24 +121,25 @@ for j, event_type in enumerate(event_types):
         event_data = data[data['eventtype'] == event_type]['percentage']
         percentage = event_data.values[0] if len(event_data) > 0 else 0
         percentages.append(percentage)
-    plt.bar(np.arange(len(years)) + j * bar_width, percentages, color=colors[event_type], width=bar_width, label=event_type, edgecolor="black")
+    plt.bar(np.arange(len(years)) + j * bar_width, percentages, color=colors[event_type], width=bar_width, label=event_type, edgecolor="black", zorder=2)
 
-#calculate the percentage of "TM Sent" events relative to "Email Clicked" events for each year
+# Calculate the percentage of "TM Sent" events relative to "Email Clicked" events for each year
 tm_sent_data = all_data_for_line[all_data_for_line['eventtype'] == "TM Sent"].sort_values('year')
 email_clicked_data = all_data[all_data['eventtype'] == "Email Click"].sort_values('year')
 tm_sent_percentages = tm_sent_data['counts'].values / email_clicked_data['counts'].values * 100
 
-#create a line graph for the "TM Sent" event type
-plt.plot(np.arange(len(years)), tm_sent_percentages, color='blue', marker='o', label='TM Sent')
+# Create a line graph for the "TM Sent" event type
+plt.plot(np.arange(len(years)), tm_sent_percentages, color='blue', marker='o', label='Training Complete', zorder=3)
 
-#set the x-ticks to be the years
+# Set the x-ticks to be the years
 plt.xticks(np.arange(len(years)) + bar_width, years)
 
-#set the y-ticks to go up by tens
+# Set the y-ticks to go up by tens
 plt.yticks(np.arange(0, 110, 10))
 
 plt.title(end_date+' Phishing and Awareness')
 plt.xlabel('Years')
 plt.ylabel('Percentage')
 plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.grid(axis='y', color=(0.9, 0.9, 0.9), zorder=1)
 plt.show()
