@@ -3,7 +3,7 @@
 #nice high level report to show training over time that can be generated at any time
 #change data and column names as needed
 
-#Copyright (c) 2024 Tyson Shannon
+#Copyright (c) 2024 Tyson Shannon - MIT license
 
 import requests
 import pandas as pd
