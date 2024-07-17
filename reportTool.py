@@ -1,5 +1,5 @@
 #for proof point simulated attack training (PSAT) phising campaign reports
-#plots 5 years of view, report, click, credential submission, and training message data
+#plots 5 years of report, click, credential submission, no actins, and training message data
 #nice high level report to show training over time that can be generated at any time
 #change data and column names as needed
 
