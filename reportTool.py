@@ -83,7 +83,7 @@ df_total['year'] = df_total['campaignstartdate'].dt.year
 df_total = df_total[df_total['year'].notna()]
 
 #filter the data to include only the specified event types for bar graph
-df_bars = df_total[df_total['eventtype'].isin(["Reported", "Email Click", "Data Submission", "Email View"])]
+df_bars = df_total[df_total['eventtype'].isin(["Reported", "Email Click", "Data Submission", "No Action"])]
 #filter the data to include only the specified event types for line graph
 df_line = df_total[df_total['eventtype'].isin(["TM Sent"])]
 
@@ -107,10 +107,10 @@ all_data['percentage'] = all_data.apply(lambda row: row['counts'] / total_counts
 
 #get the unique years and event types
 years = all_data['year'].unique()
-event_types = ["Email View", "Reported", "Email Click", "Data Submission"]
+event_types = ["Reported", "Email Click", "Data Submission"]
 
 #assign a unique color to each event type
-colors = {"Email View": (1, 1, 1),"Reported": (0.8, 0.8, 0.8), "Email Click": "black", "Data Submission": "red"}
+colors = {"Reported": (0.8, 0.8, 0.8), "Email Click": "black", "Data Submission": "red"}
 
 #create a bar chart for each year
 bar_width = 0.2
