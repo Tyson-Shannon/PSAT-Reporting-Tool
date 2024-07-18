@@ -288,3 +288,72 @@ plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
 plt.grid(axis='y', color=(0.9, 0.9, 0.9), zorder=1)
 
 plt.show()
+
+#plot our csv data to compare last two years
+#read csv file
+df_total = pd.read_csv(end_date+' phishing_extended_output_past_5yr.csv')
+
+#remove duplicate rows from multiple link clicks and such
+df_total = df_total.drop_duplicates(subset=['useremailaddress', 'campaignname', 'eventtype'])
+
+#extract year
+df_total['campaignstartdate'] = pd.to_datetime(df_total['campaignstartdate'])
+df_total['year'] = df_total['campaignstartdate'].dt.year
+#filter to include only the last 2 years
+df_total = df_total[df_total['campaignstartdate'] >= (pd.to_datetime(str(last_month.year-1)+'-01-01'))]
+# Exclude rows where 'month' is None
+df_total = df_total[df_total['year'].notna()]
+
+#filter the data to include only the specified event types for bar graph
+df_bars = df_total[df_total['eventtype'].isin(["Reported", "Email Click", "Data Submission", "No Action"])]
+#filter the data to include only the specified event types for line graph
+df_line = df_total[df_total['eventtype'].isin(["TM Sent"])]
+
+#group data by year and event type
+grouped_yearly = df_bars.groupby(['year', 'eventtype']).size().reset_index(name='counts')
+groupedLine_yearly = df_line.groupby(['year', 'eventtype']).size().reset_index(name='counts')
+
+#total number of events per year
+total_counts_yearly = grouped_yearly.groupby('year')['counts'].sum()
+
+#new data frame
+all_data_yearly = pd.DataFrame([(year, event_type) for year in grouped_yearly['year'].unique() for event_type in grouped_yearly['eventtype'].unique()], columns=['year', 'eventtype'])
+all_data_for_line_yearly = pd.DataFrame([(year, event_type) for year in grouped_yearly['year'].unique() for event_type in groupedLine_yearly['eventtype'].unique()], columns=['year', 'eventtype'])
+
+#merge the new DataFrame with the grouped data, filling in a percentage of 0 where no events occurred
+all_data_yearly = all_data_yearly.merge(grouped_yearly, on=['year', 'eventtype'], how='left').fillna(0)
+all_data_for_line_yearly = all_data_for_line_yearly.merge(groupedLine_yearly, on=['year', 'eventtype'], how='left').fillna(0)
+
+#counts to percents
+all_data_yearly['percentage'] = all_data_yearly.apply(lambda row: row['counts'] / total_counts_yearly[row['year']] * 100, axis=1)
+
+#bar chart for each year (colors and event_types same variables as yearly)
+years = all_data_yearly['year'].unique()
+for j, event_type in enumerate(event_types):
+    percentages = []
+    for i, year in enumerate(years):
+        data = all_data_yearly[all_data_yearly['year'] == year]
+        event_data = data[data['eventtype'] == event_type]['percentage']
+        percentage = event_data.values[0] if len(event_data) > 0 else 0
+        percentages.append(percentage)
+    plt.bar(np.arange(len(years)) + j * bar_width, percentages, color=colors[event_type], width=bar_width, label=event_type, edgecolor="black", zorder=2)
+
+#line graph for training data
+tm_sent_data_yearly = all_data_for_line_yearly[all_data_for_line_yearly['eventtype'] == "TM Sent"].sort_values('year')
+email_clicked_data_yearly = all_data_yearly[all_data_yearly['eventtype'] == "Email Click"].sort_values('year')
+tm_sent_percentages_yearly = tm_sent_data_yearly['counts'].values / email_clicked_data_yearly['counts'].values * 100
+plt.plot(np.arange(len(years)), tm_sent_percentages_yearly, color='blue', marker='o', label='Training Complete', zorder=3)
+
+#set xticks to years
+plt.xticks(np.arange(len(years)) + bar_width, years)
+
+#set the y-ticks to go up by tens
+plt.yticks(np.arange(0, 110, 10))
+
+plt.title(end_date+' Phishing and Awareness (Year to Year)')
+plt.xlabel('years')
+plt.ylabel('Percentage')
+plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+plt.grid(axis='y', color=(0.9, 0.9, 0.9), zorder=1)
+
+plt.show()
