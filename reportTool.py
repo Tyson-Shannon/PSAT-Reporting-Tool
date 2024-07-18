@@ -148,7 +148,14 @@ plt.grid(axis='y', color=(0.9, 0.9, 0.9), zorder=1)
 plt.show()
 
 #plot our csv data monthly
+#read csv file
+df_total = pd.read_csv(end_date+' phishing_extended_output_past_5yr.csv')
+
+#remove duplicate rows from multiple link clicks and such
+df_total = df_total.drop_duplicates(subset=['useremailaddress', 'campaignname', 'eventtype'])
+
 #extract month
+df_total['campaignstartdate'] = pd.to_datetime(df_total['campaignstartdate'])
 df_total['month'] = df_total['campaignstartdate'].dt.to_period('M')
 #filter to include only the last 12 months
 df_total = df_total[df_total['campaignstartdate'] >= (pd.to_datetime('today') - pd.DateOffset(months=12))]
@@ -214,12 +221,19 @@ plt.grid(axis='y', color=(0.9, 0.9, 0.9), zorder=1)
 plt.show()
 
 #plot our csv data quarterly
+#read csv file
+df_total = pd.read_csv(end_date+' phishing_extended_output_past_5yr.csv')
+
+#remove duplicate rows from multiple link clicks and such
+df_total = df_total.drop_duplicates(subset=['useremailaddress', 'campaignname', 'eventtype'])
+
 #extract quarter
+df_total['campaignstartdate'] = pd.to_datetime(df_total['campaignstartdate'])
 df_total['quarter'] = df_total['campaignstartdate'].dt.to_period('Q')
 #filter to include only the last 4 quarters
 df_total = df_total[df_total['campaignstartdate'] >= (pd.to_datetime('today') - pd.DateOffset(months=12))]
 # Exclude rows where 'month' is None
-df_total = df_total[df_total['month'].notna()]
+df_total = df_total[df_total['quarter'].notna()]
 
 #filter the data to include only the specified event types for bar graph
 df_bars = df_total[df_total['eventtype'].isin(["Reported", "Email Click", "Data Submission", "No Action"])]
